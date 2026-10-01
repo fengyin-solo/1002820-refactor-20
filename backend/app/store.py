@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.services import support_rules
 
 
 class Store:
@@ -14,6 +15,9 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        # 统一判定算法换过之后，已有支撑记录按新算法重算一遍；养护看板的
+        # 支撑待处理/异常量随后直接从这些明细汇总，不另存一套口径。
+        support_rules.recompute_rows(self._tables.setdefault("support", []))
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)

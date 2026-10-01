@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { request } from '@/api/client'
 
@@ -73,13 +73,27 @@ const ENDPOINT = '/api/support'
 const columns = ["支撑编号", "所属树木", "支撑方式", "支撑材料", "安装日期", "检查日期", "稳固情况", "支撑状态"]
 const actions = ["登记松动", "加固处理", "拆除支撑"]
 const statuses = ["稳固", "松动", "损坏", "已拆除"]
-const stats = [{"label": "稳固支撑", "value": 0}, {"label": "松动支撑", "value": 0}, {"label": "损坏支撑", "value": 0}]
 
 const rows = ref<Row[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+// 支撑状态随明细重算：卡片不存独立口径，直接按稳固情况统计当前页明细。
+const stats = computed(() => {
+  const cards = [
+    { label: "稳固支撑", value: 0 },
+    { label: "松动支撑", value: 0 },
+    { label: "损坏支撑", value: 0 },
+  ]
+  const index = new Map(statuses.slice(0, 3).map((status, i) => [status, i]))
+  for (const row of rows.value) {
+    const i = index.get(String(row["稳固情况"] ?? ""))
+    if (i !== undefined) cards[i].value += 1
+  }
+  return cards
+})
 
 function resetFilters() {
   filters.value = {}

@@ -33,6 +33,13 @@ class TreeService:
     def get_entry(self, entry_id: int) -> dict[str, Any] | None:
         return store.find(MODULE, entry_id)
 
+    def support_material(self, tree_name: str) -> dict[str, Any] | None:
+        """乔木管理入口读取该树的支撑材料，复用树木支撑的同一套判定口径。"""
+        # 延迟导入避免两个业务模块在包加载时互相牵连。
+        from app.services.support import SupportService
+
+        return SupportService().tree_material(tree_name)
+
     def create_entry(self, values: dict[str, Any]) -> tuple[dict[str, Any] | None, list[str]]:
         missing = [field for field in REQUIRED_FIELDS if not str(values.get(field) or "").strip()]
         if missing:

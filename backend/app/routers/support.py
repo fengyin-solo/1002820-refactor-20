@@ -42,9 +42,9 @@ def get_entry(entry_id: int) -> dict:
 @router.post("", response_model=ActionResult)
 def create_entry(payload: EntryPayload) -> ActionResult:
     """登记一条支撑设施，缺字段时说明原因而不是静默丢弃。"""
-    entry, missing = service.create_entry(payload.values)
-    if missing:
-        return ActionResult(ok=False, message=f"缺少必填字段：{'、'.join(missing)}")
+    entry, message = service.create_entry(payload.values)
+    if entry is None:
+        return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message="支撑设施已登记", entry=entry)
 
 

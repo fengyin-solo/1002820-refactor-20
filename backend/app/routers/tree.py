@@ -39,6 +39,15 @@ def get_entry(entry_id: int) -> dict:
     return entry
 
 
+@router.get("/support-material/{tree_name}", response_model=dict)
+def get_support_material(tree_name: str) -> dict:
+    """另一入口读取某株树的支撑材料，口径与树木支撑模块保持一致。"""
+    material = service.support_material(tree_name)
+    if material is None:
+        raise HTTPException(status_code=404, detail=f"所属树木「{tree_name}」暂无支撑记录")
+    return material
+
+
 @router.post("", response_model=ActionResult)
 def create_entry(payload: EntryPayload) -> ActionResult:
     """登记一条乔木，缺字段时说明原因而不是静默丢弃。"""
