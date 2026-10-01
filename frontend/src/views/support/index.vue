@@ -73,7 +73,7 @@ const ENDPOINT = '/api/support'
 const columns = ["支撑编号", "所属树木", "支撑方式", "支撑材料", "安装日期", "检查日期", "稳固情况", "支撑状态"]
 const actions = ["登记松动", "加固处理", "拆除支撑"]
 const statuses = ["稳固", "松动", "损坏", "已拆除"]
-const stats = [{"label": "稳固支撑", "value": 0}, {"label": "松动支撑", "value": 0}, {"label": "损坏支撑", "value": 0}]
+const stats = ref([{ label: "稳固支撑", value: 0 }, { label: "松动支撑", value: 0 }, { label: "损坏支撑", value: 0 }])
 
 const rows = ref<Row[]>([])
 const total = ref(0)
@@ -110,6 +110,20 @@ async function runAction(action: string, row: Row) {
   }
 }
 
+function refreshStats() {
+  // 支撑状态统计随明细重算，不再写死
+  const counts: Record<string, number> = { 稳固: 0, 松动: 0, 损坏: 0 }
+  for (const row of rows.value) {
+    const status = String(row['支撑状态'] ?? '')
+    if (status in counts) counts[status] += 1
+  }
+  stats.value = [
+    { label: '稳固支撑', value: counts['稳固'] },
+    { label: '松动支撑', value: counts['松动'] },
+    { label: '损坏支撑', value: counts['损坏'] },
+  ]
+}
+
 async function reload() {
   errorMessage.value = ''
   const query = new URLSearchParams(filters.value as Record<string, string>).toString()
@@ -121,6 +135,7 @@ async function reload() {
     const payload = await response.json()
     rows.value = payload.items ?? []
     total.value = payload.total ?? rows.value.length
+    refreshStats()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '树木支撑列表读取失败'
   }

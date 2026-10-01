@@ -6,14 +6,14 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas import ActionResult, EntryPayload, PageResult
-from app.services.support import SupportService
+from app.services.support import LIST_FIELDS, STATUS_ORDER, SupportService
 
 router = APIRouter(prefix="/api/support", tags=["树木支撑"])
 
 service = SupportService()
 
-LIST_FIELDS = ["支撑编号", "所属树木", "支撑方式", "支撑材料", "安装日期", "检查日期", "稳固情况", "支撑状态"]
-STATUSES = ["稳固", "松动", "损坏", "已拆除"]
+# 对外字段与状态序列以服务层为唯一出处，这里只做别名暴露
+STATUSES = STATUS_ORDER
 
 
 @router.get("", response_model=PageResult[dict])
@@ -41,10 +41,10 @@ def get_entry(entry_id: int) -> dict:
 
 @router.post("", response_model=ActionResult)
 def create_entry(payload: EntryPayload) -> ActionResult:
-    """登记一条支撑设施，缺字段时说明原因而不是静默丢弃。"""
-    entry, missing = service.create_entry(payload.values)
-    if missing:
-        return ActionResult(ok=False, message=f"缺少必填字段：{'、'.join(missing)}")
+    """登记一条支撑设施，缺字段或同一株树重复登记时说明原因而不是静默丢弃。"""
+    entry, error = service.create_entry(payload.values)
+    if error:
+        return ActionResult(ok=False, message=error)
     return ActionResult(ok=True, message="支撑设施已登记", entry=entry)
 
 
